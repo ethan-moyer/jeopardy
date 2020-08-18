@@ -82,4 +82,3 @@ class ArchiveParser():
 
 if __name__ == "__main__":
     ap = ArchiveParser("6589")
-    print(ap.get_second_set())

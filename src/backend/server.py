@@ -1,35 +1,67 @@
 from archiveparser import ArchiveParser
 from flask import Flask
 from flask import Response
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 import json
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1:8080")
 
+global data
 data = {}
+
+global scores
 scores = [0, 0, 0]
 
-@app.route("/store_first_set/<game_id>", methods=["GET"])
+@socketio.on("store_first_set")
 def store_first_set(game_id):
     parser = ArchiveParser(game_id)
+    global data
     data = parser.get_first_set()
-    return data
+    emit("receive_data", data, broadcast=True)
 
-@app.route("/store_second_set/<game_id>", methods=["GET"])
+@socketio.on("store_second_set")
 def store_second_set(game_id):
     parser = ArchiveParser(game_id)
+    global data
     data = parser.get_second_set()
-    return data
+    emit("receive_data", data)
 
-@app.route("/scores", methods=["GET"])
+@socketio.on("get_data")
+def get_data():
+    global data
+    emit("receive_data", data)
+
+@socketio.on("get_remaining_questions")
+def get_remaining_questions():
+    questions = []
+    global data
+
+    for row in range(5):
+        for col in range(6):
+            if data["questions"][row][col] is None:
+                questions.append(False)
+            else:
+                questions.append(True)
+
+    emit("receive_remaining_questions", questions)
+
+@socketio.on("get_scores")
 def get_scores():
-    return Response(json.dumps(scores), mimetype="application/json")
+    global scores
+    emit("receive_scores", json.dumps(scores))
 
-@app.route("/change_score/<player>/<points>", methods=["GET"])
+@socketio.on("change_score")
 def change_score(player, points):
+    global scores
     scores[int(player)] += int(points)
-    return Response(json.dumps(scores), mimetype="application/json")
+    emit("receive_scores", json.dumps(scores))
+
+@socketio.on("show_question")
+def show_question(r, c):
+    global data
+    data["questions"][r][c] = None
+    emit("receive_data", data)
 
 if __name__ == "__main__":
     socketio.run(app)
