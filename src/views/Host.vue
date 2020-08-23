@@ -34,7 +34,7 @@
                     <th v-for="category in gameCategories" :key="category" id="game-cell">{{ category }}</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody v-if="gameQuestions.length !== 1">
                 <tr v-for="(row, indexR) in gameQuestions" :key="row">
                     <td v-for="(col, indexC) in row" :key="col" id="game-cell">
                         <a v-if="col !== null" href="#" v-on:click="showQuestion(indexR, indexC)" data-toggle="modal" data-target="#questionModal">{{ 1000*(indexR+1)/5 }}</a>
@@ -43,11 +43,11 @@
             </tbody>
         </table>
 
-        <div class="modal fade" id="questionModal" tabindex="-1" role="dialog" data-backdrop="true">
+        <div class="modal fade" id="questionModal" tabindex="-1" role="dialog" data-backdrop="true" v-if="gameQuestions.length !== 1">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3 class="modal-title" id="questionModalTitle">Question</h3>
+                        <h3 class="modal-title" id="questionModalTitle">Question for ${{ 1000*(pos.row+1)/5 }}</h3>
                     </div>
                     <div class="modal-body">
                         <h4>{{ gameQuestions[pos.row][pos.col] }}</h4>
@@ -55,8 +55,15 @@
                         <p style="color: red">{{ gameAnswers[pos.row][pos.col] }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" v-on:click="closeQuestion()" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>
+                        <select class="custom-select" v-model="selectedPlayer">
+                            <option selected>Player</option>
+                            <option value="0">One</option>
+                            <option value="1">Two</option>
+                            <option value="2">Three</option>
+                            <option value="-1">Nobody</option>
+                        </select>
+                        <button type="button" class="btn btn-success" v-on:click="correct()" data-dismiss="modal">Correct</button>
+                        <button type="button" class="btn btn-danger" v-on:click="incorrect()">Incorrect</button>
                     </div>
                 </div>
             </div>
@@ -75,9 +82,10 @@ export default {
             gameId: "",
             scores: [0, 0, 0],
             gameCategories: Array,
-            gameQuestions: [[0]],
-            gameAnswers: [[0]],
-            pos: { row: 0, col: 0 }
+            gameQuestions: [[]],
+            gameAnswers: [[]],
+            pos: { row: 0, col: 0 },
+            selectedPlayer: String
         }
     },
     methods: {
@@ -89,8 +97,20 @@ export default {
             this.pos.col = col;
             this.$socket.client.emit("open_question", row, col);
         },
-        closeQuestion() {
+        correct() {
+            if (this.selectedPlayer && this.selectedPlayer !== "-1") {
+                let points = 1000 * (this.pos.row + 1) / 5;
+                this.$socket.client.emit("change_score", this.selectedPlayer, points);
+            } else if (this.selectedPlayer === "-1") {
+                this.$socket.client.emit("change_score", 0, 0);
+            }
             this.$socket.client.emit("remove_question", this.pos.row, this.pos.col);
+        },
+        incorrect() {
+            if (this.selectedPlayer) {
+                let points = 1000 * (this.pos.row + 1) / 5;
+                this.$socket.client.emit("change_score", this.selectedPlayer, -points);
+            }
         }
     },
     sockets: {

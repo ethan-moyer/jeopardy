@@ -1,6 +1,6 @@
 <template>
     <div class="player">
-        <div class="container">
+        <div class="container" v-if="categories.length !== 0 && questions.length !== 0">
             <div class="category" v-for="c in categories" :key="c">
                 <span class="category-text">
                     {{ c }}
@@ -40,8 +40,8 @@ export default {
     data() {
         return {
             isConnected: false,
-            categories: ["C0", "C0", "C0", "C0", "C0", "C0"],
-            questions: ["1"],
+            categories: [],
+            questions: [],
             currentQuestion: ""
         }
     },
@@ -85,31 +85,39 @@ export default {
     }
 
     .category {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        position: relative;
 
         border: 1px solid black;
     }
     
     .category-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+
         font-family: "Teko", sans-serif;
-        font-size: 30px;
+        font-size: 2vw;
         color: #ffffff;
+        text-shadow: 0.3vw 0.3vw black;
     }
 
     .question {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
+        position: relative;
         border: 1px solid black;
     }
 
     .question-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
         font-family: "Teko", sans-serif;
-        font-size: 45px;
+        font-size: 4vw;
         color: #ca983f;
+        text-shadow: 0.4vw 0.4vw black;
     }
 
     .modal {
@@ -125,10 +133,14 @@ export default {
     }
 
     .modal-text {
+        position: absolute;
+        left: 50%;
+        top: 40%;
+        transform: translate(-50%, -50%);
         text-align: center;
-        padding-top: 12.5%;
         font-family: 'Noto Serif', serif;
-        font-size: 80px;
+        font-size: 5vw;
         color: white;
+        text-shadow: .3vw .3vw black;
     }
 </style>

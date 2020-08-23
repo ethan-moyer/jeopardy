@@ -5,7 +5,7 @@ from flask_socketio import SocketIO, emit
 import json
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1:8080")
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 global data
 data = {}
@@ -50,20 +50,20 @@ def get_data_host():
 def remove_question(row, col):
     global data
     data["questions"][row][col] = None
+    emit("close_question", broadcast=True)
     emit("receive_data", player_data(), broadcast=True)
     emit("receive_data_host", (data, scores), broadcast=True)
-    emit("close_question", broadcast=True)
 
 @socketio.on("open_question")
 def open_question(row, col):
     global data
     emit("open_question", data["questions"][row][col], broadcast=True)
 
-@socketio.on("close_question")
-def close_question(player, points):
+@socketio.on("change_score")
+def change_score(player, points):
     global scores
-    scores[player] += points
-    emit("close_question", broadcast=True)
+    scores[int(player)] += int(points)
+    emit("receive_data_host", (data, scores), broadcast=True)
 
 if __name__ == "__main__":
-    socketio.run(app)
+    socketio.run(app, host="0.0.0.0")
